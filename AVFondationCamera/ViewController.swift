@@ -21,7 +21,6 @@ class ViewController: UIViewController {
     
     //MARK: -UI
     let captureButton = UIButton()
-    let zoomScaleLabel = UILabel()
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -33,10 +32,6 @@ class ViewController: UIViewController {
         captureSession.startRunning()
         
         setupCaptureButton()
-        setupZoomScaleLabel()
-        
-        let pinchGesture = UIPinchGestureRecognizer(target: self, action: #selector(pinchedGesture(gestureRecgnizer:)))
-        self.view.addGestureRecognizer(pinchGesture)
     }
 
     func setupCaptureSession() {
@@ -96,60 +91,10 @@ class ViewController: UIViewController {
     }
 
     
-    //タップされたときの処理
     @objc func tappedCaptureButton(_ sender: UIButton) {
         let settings = AVCapturePhotoSettings()
         settings.flashMode = .auto
         self.photoOutput?.capturePhoto(with: settings, delegate: self as AVCapturePhotoCaptureDelegate)
-    }
-    
-    func setupZoomScaleLabel() {
-        zoomScaleLabel.textColor = .white
-        zoomScaleLabel.font = UIFont.systemFont(ofSize: 20)
-        zoomScaleLabel.isHidden = true
-        self.view.addSubview(zoomScaleLabel)
-        zoomScaleLabel.translatesAutoresizingMaskIntoConstraints = false
-        zoomScaleLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor).isActive = true
-        zoomScaleLabel.bottomAnchor.constraint(equalTo: captureButton.topAnchor, constant: -40).isActive = true
-    }
-    
-    var oldZoomScale: CGFloat = 1.0
-    @objc func pinchedGesture(gestureRecgnizer: UIPinchGestureRecognizer) {
-        do {
-            try currentDevice.lockForConfiguration()
-            let maxZoomScale: CGFloat = 6.0
-            let minZoomScale: CGFloat = 1.0
-            var currentZoomScale: CGFloat = currentDevice.videoZoomFactor
-            let pinchZoomScale: CGFloat = gestureRecgnizer.scale
-            zoomScaleLabel.isHidden = false
-            
-            if pinchZoomScale > 1.0 {
-                currentZoomScale = oldZoomScale+pinchZoomScale-1
-            } else {
-                currentZoomScale = oldZoomScale-(1-pinchZoomScale)*oldZoomScale
-            }
-
-            if currentZoomScale < minZoomScale {
-                currentZoomScale = minZoomScale
-            }
-            else if currentZoomScale > maxZoomScale {
-                currentZoomScale = maxZoomScale
-            }
-            
-            zoomScaleLabel.text = String(format: "%.1f", currentZoomScale)
-            if gestureRecgnizer.state == .ended {
-                oldZoomScale = currentZoomScale
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                    self.zoomScaleLabel.isHidden = true
-                }
-                
-            }
-
-            currentDevice.videoZoomFactor = currentZoomScale
-            currentDevice.unlockForConfiguration()
-        } catch {
-            return
-        }
     }
 
 }
